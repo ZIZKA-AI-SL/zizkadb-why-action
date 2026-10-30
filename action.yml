@@ -1,0 +1,100 @@
+name: ZizkaDB Why - explain AI agent failures
+description: Run your AI agent tests and see why the agent did what it did, as a causal chain in the PR. Open source, no account.
+author: Zizka AI
+branding:
+  icon: git-pull-request
+  color: orange
+
+inputs:
+  run:
+    description: Command that runs your agent or its tests (e.g. `pytest tests/agent`). ZIZKADB_HOST and ZIZKADB_API_KEY are set for it.
+    required: false
+    default: ""
+  host:
+    description: Use an existing ZizkaDB instead of starting one in the runner (e.g. https://zizkadb.example.com).
+    required: false
+    default: ""
+  api-key:
+    description: API key for `host` (pass it from a secret). Not needed for the local instance.
+    required: false
+    default: ""
+  agents:
+    description: Comma-separated agent names to report on. Default all.
+    required: false
+    default: ""
+  max-chains:
+    description: Most causal chains to show.
+    required: false
+    default: "5"
+  show-data:
+    description: Show a short excerpt of each step's data. Set false for public repos with sensitive prompts.
+    required: false
+    default: "true"
+  comment:
+    description: Post (and update) the report as a pull request comment. Needs `pull-requests write`.
+    required: false
+    default: "true"
+  image:
+    description: ZizkaDB image for the local instance.
+    required: false
+    default: ghcr.io/zizka-ai-sl/zizkadb:latest
+  artifact-name:
+    description: Name of the uploaded history artifact.
+    required: false
+    default: zizkadb-history
+  github-token:
+    description: Token for the PR comment.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  events:
+    description: Agent steps recorded in this run.
+    value: ${{ steps.why.outputs.events }}
+  chains:
+    description: Causal chains reported.
+    value: ${{ steps.why.outputs.chains }}
+  command-exit-code:
+    description: Exit code of `run`.
+    value: ${{ steps.why.outputs.command-exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - id: why
+      shell: bash
+      # The report is written even when `run` fails; the step then fails with
+      # the command's exit code (checked in the last step).
+      continue-on-error: true
+      env:
+        INPUT_RUN: ${{ inputs.run }}
+        INPUT_HOST: ${{ inputs.host }}
+        INPUT_API_KEY: ${{ inputs.api-key }}
+        INPUT_AGENTS: ${{ inputs.agents }}
+        INPUT_MAX_CHAINS: ${{ inputs.max-chains }}
+        INPUT_SHOW_DATA: ${{ inputs.show-data }}
+        INPUT_COMMENT: ${{ inputs.comment }}
+        INPUT_IMAGE: ${{ inputs.image }}
+        INPUT_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: python3 "$GITHUB_ACTION_PATH/src/why.py"
+
+    - if: always() && steps.why.outputs.events != '' && steps.why.outputs.events != '0'
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: zizkadb-history/
+        if-no-files-found: ignore
+        retention-days: 30
+
+    - if: always()
+      shell: bash
+      run: docker rm -f zizkadb-action >/dev/null 2>&1 || true
+
+    - if: always() && steps.why.outcome == 'failure'
+      shell: bash
+      env:
+        CODE: ${{ steps.why.outputs.command-exit-code }}
+      run: |
+        echo "::error::Your command failed (exit ${CODE:-1}). See the ZizkaDB Why report in the job summary."
+        exit "${CODE:-1}"
