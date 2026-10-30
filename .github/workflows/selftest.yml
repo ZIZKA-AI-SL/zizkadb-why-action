@@ -15,36 +15,31 @@ jobs:
       ZIZKADB_TELEMETRY: "false"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with: { repository: ZIZKA-AI-SL/ZizkaDB, path: zizkadb-src }
-      - name: Build ZizkaDB image (GHCR images are private for now)
-        run: docker build -q -f zizkadb-src/infra/allinone/Dockerfile -t zizkadb-local:test zizkadb-src
       - run: pip install -q zizkadb-sdk
 
       - name: WHY failing agent
         id: why_fail
         continue-on-error: true
         uses: ./
-        with: { run: python selftest/agent.py --fail, image: "zizkadb-local:test" }
+        with: { run: python selftest/agent.py --fail }
       - name: WHY failing agent again (same job, repeated upload)
         id: why_fail2
         continue-on-error: true
         uses: ./
-        with: { run: python selftest/agent.py --fail, image: "zizkadb-local:test" }
+        with: { run: python selftest/agent.py --fail }
       - name: WHY no logging
         id: why_empty
         uses: ./
-        with: { run: echo nothing logged, image: "zizkadb-local:test" }
+        with: { run: echo nothing logged }
       - name: AUDIT intact
         id: audit_ok
         uses: ZIZKA-AI-SL/zizkadb-audit-action@main
-        with: { run: python selftest/agent.py, image: "zizkadb-local:test" }
+        with: { run: python selftest/agent.py }
       - name: AUDIT tampered
         id: audit_bad
         continue-on-error: true
         uses: ZIZKA-AI-SL/zizkadb-audit-action@main
         with:
-          image: "zizkadb-local:test"
           attest: "false"
           run: |
             python selftest/agent.py
