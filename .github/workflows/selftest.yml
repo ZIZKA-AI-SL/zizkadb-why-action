@@ -24,6 +24,11 @@ jobs:
         continue-on-error: true
         uses: ./
         with: { run: python selftest/agent.py --fail, image: "zizkadb-local:test" }
+      - name: WHY failing agent again (same job, repeated upload)
+        id: why_fail2
+        continue-on-error: true
+        uses: ./
+        with: { run: python selftest/agent.py --fail, image: "zizkadb-local:test" }
       - name: WHY no logging
         id: why_empty
         uses: ./
@@ -47,15 +52,18 @@ jobs:
         env:
           WF: ${{ steps.why_fail.outcome }}|${{ steps.why_fail.outputs.events }}|${{ steps.why_fail.outputs.chains }}|${{ steps.why_fail.outputs.command-exit-code }}
           WE: ${{ steps.why_empty.outcome }}|${{ steps.why_empty.outputs.events }}
+          W2: ${{ steps.why_fail2.outputs.events }}|${{ steps.why_fail.outputs.artifact-name != steps.why_fail2.outputs.artifact-name }}
           AO: ${{ steps.audit_ok.outcome }}|${{ steps.audit_ok.outputs.intact }}|${{ steps.audit_ok.outputs.events }}
           AB: ${{ steps.audit_bad.outcome }}|${{ steps.audit_bad.outputs.intact }}
         run: |
           echo "::notice title=why_fail::$WF"
           echo "::notice title=why_empty::$WE"
+          echo "::notice title=why_repeat::$W2"
           echo "::notice title=audit_ok::$AO"
           echo "::notice title=audit_bad::$AB"
           ok=1
           [ "$WF" = "failure|5|1|1" ] || { echo "::error::why_fail expected failure|5|1|1"; ok=0; }
+          [ "$W2" = "5|true" ] || { echo "::error::why_repeat expected 5|true"; ok=0; }
           [ "$WE" = "success|0" ] || { echo "::error::why_empty expected success|0"; ok=0; }
           [ "$AO" = "success|true|5" ] || { echo "::error::audit_ok expected success|true|5"; ok=0; }
           [ "$AB" = "failure|false" ] || { echo "::error::audit_bad expected failure|false"; ok=0; }
