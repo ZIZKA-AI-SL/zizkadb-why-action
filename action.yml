@@ -39,9 +39,9 @@ inputs:
     required: false
     default: ghcr.io/zizka-ai-sl/zizkadb:latest
   artifact-name:
-    description: Name of the uploaded history artifact.
+    description: Name of the uploaded history artifact. Default `zizkadb-history-<job>-<random>`, unique per run of the action.
     required: false
-    default: zizkadb-history
+    default: ""
   github-token:
     description: Token for the PR comment.
     required: false
@@ -57,6 +57,9 @@ outputs:
   command-exit-code:
     description: Exit code of `run`.
     value: ${{ steps.why.outputs.command-exit-code }}
+  artifact-name:
+    description: Name of the uploaded history artifact.
+    value: ${{ steps.why.outputs.artifact-name }}
 
 runs:
   using: composite
@@ -82,7 +85,7 @@ runs:
     - if: always() && steps.why.outputs.events != '' && steps.why.outputs.events != '0'
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
-        name: ${{ inputs.artifact-name }}
+        name: ${{ steps.why.outputs.artifact-name }}
         path: zizkadb-history/
         if-no-files-found: ignore
         retention-days: 30

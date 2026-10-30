@@ -99,7 +99,7 @@ def main() -> int:
     key = z.env("INPUT_API_KEY")
     max_chains = int(z.env("INPUT_MAX_CHAINS", "5") or 5)
     show_data = z.truthy("INPUT_SHOW_DATA")
-    artifact = z.env("INPUT_ARTIFACT_NAME", "zizkadb-history")
+    artifact = z.artifact_name("zizkadb-history")
 
     started = z.now_iso()
     if not host:
@@ -164,6 +164,7 @@ def main() -> int:
     z.set_output("chains", str(chains))
     z.set_output("command-exit-code", str(exit_code))
     z.set_output("history-dir", "zizkadb-history" if events_total else "")
+    z.set_output("artifact-name", artifact)
     return exit_code
 
 

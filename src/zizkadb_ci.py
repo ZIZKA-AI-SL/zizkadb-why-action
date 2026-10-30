@@ -48,6 +48,16 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def artifact_name(default_base: str) -> str:
+    """The input name, or `<base>-<job>-<random>`: unique when the action runs
+    more than once in a workflow run (matrix jobs, repeated steps)."""
+    chosen = env("INPUT_ARTIFACT_NAME")
+    if chosen:
+        return chosen
+    job = "".join(c if c.isalnum() or c in "-_" else "-" for c in env("GITHUB_JOB", "job"))[:40]
+    return f"{default_base}-{job}-{os.urandom(3).hex()}"
+
+
 # ── ZizkaDB lifecycle ───────────────────────────────────────────────────────
 
 def _free_port() -> int:

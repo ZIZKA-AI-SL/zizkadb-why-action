@@ -44,7 +44,7 @@ That is all. The action:
 1. **Starts ZizkaDB inside the runner** (the open-source single container). No account, no API key, no secrets. **Your data never leaves the runner** and is deleted with the job.
 2. **Runs your command** with `ZIZKADB_HOST` and `ZIZKADB_API_KEY` set, so the ZizkaDB SDK in your agent logs there automatically.
 3. **Explains** failed steps (or, when nothing failed, the last step of each session) as causal chains, in the **job summary** and a **PR comment** that it updates on every push.
-4. **Saves the history** as the `zizkadb-history` artifact, so you can open the exact run in the ZizkaDB dashboard on your machine.
+4. **Saves the history** as a `zizkadb-history-…` artifact (the report names it), so you can open the exact run in the ZizkaDB dashboard on your machine.
 5. **Fails the step** with your command's exit code, after the report is written.
 
 ## Make your agent log
@@ -73,7 +73,7 @@ async with ZizkaDB() as db:  # uses ZIZKADB_HOST and ZIZKADB_API_KEY
 | `show-data` | `true` | Show a short excerpt of each step's data. Set `false` if prompts are sensitive: PR comments and job summaries in public repos are public. |
 | `comment` | `true` | Post and update a PR comment (needs `pull-requests: write`; fork PRs get the job summary only). |
 | `image` | `ghcr.io/zizka-ai-sl/zizkadb:latest` | ZizkaDB image for the local instance; pin a version for reproducible runs. |
-| `artifact-name` | `zizkadb-history` | Name of the uploaded history artifact. |
+| `artifact-name` | `zizkadb-history-<job>-<random>` | Name of the uploaded history artifact; unique by default so matrix jobs and repeated steps do not collide. |
 | `github-token` | `${{ github.token }}` | Token used for the PR comment. |
 
 ## Outputs
@@ -83,6 +83,7 @@ async with ZizkaDB() as db:  # uses ZIZKADB_HOST and ZIZKADB_API_KEY
 | `events` | Agent steps recorded in this run |
 | `chains` | Causal chains reported |
 | `command-exit-code` | Exit code of `run` |
+| `artifact-name` | Name of the uploaded history artifact |
 
 Later steps in the job also get `ZIZKADB_HOST` and `ZIZKADB_API_KEY`.
 
