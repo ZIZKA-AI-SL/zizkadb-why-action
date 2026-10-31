@@ -92,6 +92,7 @@ Later steps in the job also get `ZIZKADB_HOST` and `ZIZKADB_API_KEY`.
 - **One agent per run.** The local instance is open-source ZizkaDB, which records one agent per install. If your tests log a second agent name, it is refused and the report says so. For many agents, fleets and agent-to-agent recording, see [ZizkaDB Cloud](https://db.zizka.ai).
 - **Telemetry.** The ZizkaDB SDK in your agent sends an anonymous install count; set `ZIZKADB_TELEMETRY: "false"` in the job's `env` to turn it off. [Details](https://github.com/ZIZKA-AI-SL/ZizkaDB/blob/main/docs/telemetry.md).
 - **Proving the history is intact** for audits: [ZizkaDB Audit](https://github.com/ZIZKA-AI-SL/zizkadb-audit-action).
+- **In your editor:** the same Why and Audit answers in Claude Code and other coding agents: [ZizkaDB skills](https://github.com/ZIZKA-AI-SL/zizkadb-skills).
 
 ## Beyond CI
 
